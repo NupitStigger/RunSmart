@@ -85,4 +85,80 @@ document.addEventListener('DOMContentLoaded', function() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     }
+    // 5. Плавный переход к секции по кнопке (data-scroll="#id")
+    document.querySelectorAll('[data-scroll]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const target = document.querySelector(btn.dataset.scroll);
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+    // 6. Модальное окно «Купить»
+    const modalOverlay = document.getElementById('buyModal');
+
+    if (modalOverlay) {
+        const modal = modalOverlay.querySelector('.modal');
+        const modalProduct = modalOverlay.querySelector('.modal-product');
+        const modalForm = modalOverlay.querySelector('.modal-form');
+        const closeBtn = modalOverlay.querySelector('.modal-close');
+        let closeTimer = null;
+
+        function openModal(productName, price) {
+            clearTimeout(closeTimer);
+            modal.classList.remove('sent');
+            modalProduct.textContent = '';
+            if (productName) {
+                const label = window.I18N ? window.I18N.t('chosen') : 'Вы выбрали:';
+                const strong = document.createElement('strong');
+                strong.textContent = productName;
+                modalProduct.append(label + ' ', strong, price ? ' — ' + price : '');
+            }
+            modalOverlay.classList.add('open');
+            modalOverlay.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+            const firstInput = modalForm.querySelector('input');
+            setTimeout(() => firstInput && firstInput.focus(), 350);
+        }
+
+        function closeModal() {
+            modalOverlay.classList.remove('open');
+            modalOverlay.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+        }
+
+        // Кнопки «КУПИТЬ» в карточках каталога
+        document.querySelectorAll('.catalog-item .btn-primary').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const item = btn.closest('.catalog-item');
+                const nameEl = item.querySelector('.catalog-item-subtitle');
+                const priceEl = item.querySelector('.catalog-item-price');
+                openModal(
+                    nameEl ? nameEl.textContent.trim() : '',
+                    priceEl ? priceEl.textContent.trim() : ''
+                );
+            });
+        });
+
+        // Закрытие: крестик, клик по тёмному фону, Esc
+        closeBtn.addEventListener('click', closeModal);
+        modalOverlay.addEventListener('click', function(e) {
+            if (e.target === modalOverlay) {
+                closeModal();
+            }
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && modalOverlay.classList.contains('open')) {
+                closeModal();
+            }
+        });
+
+        // Отправка формы
+        modalForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            modal.classList.add('sent');
+            modalForm.reset();
+            closeTimer = setTimeout(closeModal, 2500);
+        });
+    }
 });
